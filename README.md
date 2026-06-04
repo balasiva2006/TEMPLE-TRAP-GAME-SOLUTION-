@@ -1,211 +1,396 @@
+# 🏛️ Temple Trap Puzzle Solver
 
-\documentclass[a4paper,11pt]{article}
+An intelligent **Temple Trap Puzzle Solver** built using the **A-Star Search Algorithm** to automatically find the **optimal sequence of tile slides and pawn movements** required for escaping the temple.
 
-\usepackage[a4paper,margin=1in]{geometry}
-\usepackage{graphicx}
-\usepackage{hyperref}
-\usepackage{amsmath}
-\usepackage{listings}
-\usepackage{xcolor}
+This project models the **Temple Trap logic puzzle** as a **state-space search problem**, applying concepts from **Artificial Intelligence**, **heuristic search**, and **graph traversal**.
 
-\title{\textbf{Temple Trap Puzzle Solver}}
-\author{Your Name}
-\date{\today}
+---
 
-\begin{document}
+## 📌 Project Overview
 
-\maketitle
+Temple Trap is a challenging sliding puzzle game where a pawn must escape through a maze formed by movable tiles.
 
-\section{Project Overview}
+The puzzle contains:
 
-This project implements an \textbf{Temple Trap Puzzle Solver} using the 
-\textbf{A* Search Algorithm}. The objective of the puzzle is to guide a pawn 
-through a dynamic temple environment by sliding tiles and moving strategically 
-until the pawn reaches the exit.
+* A **3×3 board**
+* **8 movable tiles**
+* **1 blank cell**
+* **2 vertical layers** (Ground & Top)
+* **Special stair tiles**
+* **Sliding mechanics with movement constraints**
 
-The implementation models the puzzle as a \textbf{state-space search problem}, 
-where every valid board configuration represents a unique state. The solver 
-searches for an optimal sequence of actions with minimum total cost.
+This solver automatically computes the **minimum-cost solution** using **A*** search.
 
-\section{Features}
 
-\begin{itemize}
-    \item Implements the \textbf{A* Search Algorithm} for optimal pathfinding.
-    \item Supports \textbf{multiple puzzle levels}.
-    \item Models both:
-    \begin{itemize}
-        \item \textbf{Tile movement} (sliding tiles)
-        \item \textbf{Pawn movement} (walking across connected paths)
-    \end{itemize}
-    \item Handles:
-    \begin{itemize}
-        \item Ground and top floor navigation
-        \item Stair transitions
-        \item Tile orientations
-        \item Reachability checking
-    \end{itemize}
-    \item Uses a \textbf{heuristic function} to improve search efficiency.
-    \item Produces a detailed step-by-step solution path.
-\end{itemize}
+---
 
-\section{Problem Formulation}
+## 🧩 Puzzle Rules
 
-The puzzle is represented as a \textbf{3 × 3 board} consisting of:
+### 1. Board Structure
 
-\begin{itemize}
-    \item 8 unique temple tiles (A--H)
-    \item 1 blank cell
-    \item A pawn that moves across valid paths
-\end{itemize}
+The board consists of a **3×3 grid**:
 
-The pawn can move between tiles if the corresponding sides are connected. 
-Movement can happen on:
+```text
+0 1 2
+3 4 5
+6 7 8
+```
 
-\begin{itemize}
-    \item \textbf{Ground Layer}
-    \item \textbf{Top Layer}
-\end{itemize}
+One cell is always empty (**blank tile**).
 
-Some tiles contain \textbf{stairs}, allowing transitions between layers.
+---
 
-The goal is to guide the pawn to the exit at cell 0 with a valid opening toward 
-the left boundary.
+### 2. Two Layers
 
-\section{State Representation}
+The puzzle contains two movement layers:
 
-Each puzzle configuration is represented using a \texttt{State} class containing:
+* **Ground Layer**
+* **Top Layer**
 
-\begin{itemize}
-    \item Puzzle configuration
-    \item Pawn position
-    \item Pawn level (Ground / Top)
-    \item Blank tile position
-    \item Parent state
-    \item Action taken
-    \item Path cost ($g$)
-    \item Evaluation cost ($f = g + h$)
-\end{itemize}
+The pawn may switch layers **only through stair tiles (D & E)**.
 
-\section{Heuristic Function}
+---
 
-The heuristic estimates the cost to reach the exit using:
+### 3. Tile Connectivity
 
-\[
-h(S) = r_p + c_p +
-\begin{cases}
-2, & \text{if exit is not immediately accessible} \\
-0, & \text{otherwise}
-\end{cases}
-\]
+Movement is allowed only when adjacent tiles have matching openings.
 
-where:
+#### Horizontal Connection
 
-\begin{itemize}
-    \item $r_p$ = row index of pawn
-    \item $c_p$ = column index of pawn
-\end{itemize}
+* Left tile → Side II open
+* Right tile → Side IV open
 
-This helps A* prioritize states closer to the exit.
+#### Vertical Connection
 
-\section{Algorithms Used}
+* Upper tile → Side III open
+* Lower tile → Side I open
 
-\subsection{A* Search}
+---
 
-The A* algorithm is used to explore possible puzzle configurations while minimizing:
+### 4. Lock Rule
 
-\[
+A tile **cannot be moved** if the pawn is currently standing on it.
+
+---
+
+### 5. Goal Condition
+
+The puzzle is solved when:
+
+1. The pawn reaches **Cell 0**
+2. The tile at Cell 0 is open on **Side IV (left boundary)**
+3. The pawn exits the temple successfully
+
+---
+
+## 🧠Approach
+
+This project models the puzzle as a **State Space Search Problem**.
+
+### State Representation
+
+Each state is represented as:
+
+```math
+s = (p, l, b, T)
+```
+
+Where:
+
+* **p** → Pawn position
+* **l** → Pawn layer (Ground/Top)
+* **b** → Blank tile position
+* **T** → Current board configuration
+
+The state is implemented using a custom `State` class containing:
+
+* Pawn Position
+* Pawn Level
+* Puzzle Configuration
+* Blank Position
+* Parent State
+* Action Taken
+* `g(n)` → Actual Cost
+* `f(n)` → Total Cost
+
+---
+
+## 🔍 Search Algorithm
+
+The solver uses the **A-Star Search Algorithm**.
+
+### Why A*?
+
+A* guarantees:
+
+* **Optimal solutions**
+* **Efficient search**
+* **Heuristic-guided exploration**
+
+The total evaluation function:
+
+```math
 f(n) = g(n) + h(n)
-\]
+```
 
-where:
+Where:
 
-\begin{itemize}
-    \item $g(n)$ = actual cost from start
-    \item $h(n)$ = estimated remaining cost
-\end{itemize}
+* `g(n)` → Actual cost from start state
+* `h(n)` → Heuristic estimate to goal
 
-\subsection{Breadth First Search (BFS)}
+---
 
-BFS is internally used for:
+## 📏 Heuristic Function
 
-\begin{itemize}
-    \item Pawn movement exploration
-    \item Exit reachability checking
-    \item Valid movement generation
-\end{itemize}
+The heuristic combines:
 
-\section{Project Structure}
+### 1. Manhattan Distance
 
-\begin{lstlisting}[language=Python]
-project/
+Distance from pawn to exit cell:
+
+```math
+|x_p - x_0| + |y_p - y_0|
+```
+
+### 2. Exit Penalty
+
+Additional penalty is added when the exit tile is not correctly oriented.
+
+This improves search efficiency while preserving solution quality.
+
+---
+
+## ⚙️ Project Structure
+
+```text
+Temple-Trap-Solver/
 │── main.py
 │── REPORT.docx
 │── problem statement.pdf
-│── README.tex
-\end{lstlisting}
+│── README.md
+```
 
-\section{How to Run}
+### File Descriptions
 
-\subsection{Requirements}
+| File                    | Description                                      |
+| ----------------------- | ------------------------------------------------ |
+| `main.py`               | Complete implementation of Temple Trap Solver    |
+| `REPORT.docx`           | Explanation of algorithms, heuristic, and design |
+| `problem statement.pdf` | Puzzle definition and assignment description     |
+| `README.md`             | Project documentation                            |
 
-Install Python 3.x.
+---
 
-\subsection{Run the Solver}
+## 🧱 Tile Definitions
 
-Execute:
+The game contains **8 unique tiles (A–H)**.
 
-\begin{lstlisting}[language=bash]
-python main.py
-\end{lstlisting}
+### Top Layer Tiles
 
-To test a different puzzle level, modify:
+| Tile | Description                  |
+| ---- | ---------------------------- |
+| A    | Top openings on Side I & II  |
+| B    | Top openings on Side I & II  |
+| C    | Top openings on Side II & IV |
 
-\begin{lstlisting}[language=Python]
+### Stair Tiles
+
+| Tile | Description                 |
+| ---- | --------------------------- |
+| D    | Stairs between Ground ↔ Top |
+| E    | Stairs between Ground ↔ Top |
+
+### Ground Layer Tiles
+
+| Tile | Description                    |
+| ---- | ------------------------------ |
+| F    | Ground openings on Side I & II |
+| G    | Ground openings on Side I & II |
+| H    | Ground openings on Side I & II |
+
+---
+
+## 🔄 State Expansion
+
+The solver generates neighbors using:
+
+### 1. Tile Sliding
+
+The blank tile is moved in all valid directions.
+
+Restrictions:
+
+* Cannot move the tile containing the pawn
+* Only valid board positions allowed
+
+---
+
+### 2. Pawn Movement
+
+The pawn traverses:
+
+* Ground layer paths
+* Top layer paths
+* Stair transitions
+
+Implemented using **Breadth First Search (BFS)** to find reachable locations.
+
+---
+
+## 📚 Supported Levels
+
+The solver currently supports multiple levels:
+
+### Starter
+
+* starter-1
+* starter-2
+* starter-3
+* starter-4
+
+### Junior
+
+* junior-1
+* junior-2
+* junior-3
+* junior-4
+
+### Expert
+
+* expert-1
+* expert-2
+* expert-3
+* expert-4
+
+### Master
+
+* master-1
+* master-2
+
+Custom puzzle IDs:
+
+* `43`
+* `55`
+
+To change the puzzle level:
+
+```python
 puzzle_level = '55'
-\end{lstlisting}
+```
 
-inside \texttt{main.py}.
+Replace `'55'` with:
 
-\section{Example Output}
+```python
+'starter-1'
+'junior-4'
+'expert-2'
+'master-1'
+```
 
-The solver generates:
+---
 
-\begin{itemize}
-    \item Step-by-step moves
-    \item Tile slides
-    \item Pawn transitions
-    \item Total path cost
-    \item Final exit path
-\end{itemize}
+## 🚀 Installation
 
-\section{Applications}
+### Clone the Repository
 
-This project demonstrates concepts in:
+```bash
+git clone https://github.com/balasiva2006/TEMPLE-TRAP-GAME-SOLUTION-.git
+```
 
-\begin{itemize}
-    \item Artificial Intelligence
-    \item Search Algorithms
-    \item State Space Representation
-    \item Heuristic Optimization
-    \item Graph Traversal
-\end{itemize}
+### Navigate to Project
 
-\section{Future Improvements}
+```bash
+cd TEMPLE-TRAP-GAME-SOLUTION-
+```
 
-\begin{itemize}
-    \item Add graphical visualization
-    \item Support larger puzzle sizes
-    \item Improve heuristic accuracy
-    \item Add interactive gameplay
-\end{itemize}
+### Run the Solver
 
-\section{References}
+```bash
+python main.py
+```
 
-\begin{itemize}
-    \item Temple Trap Puzzle Problem Statement
-    \item A* Search Algorithm
-    \item Artificial Intelligence Search Problems
-\end{itemize}
+---
 
-\end{document}
+## 🖥️ Example Output
 
+The solver prints:
+
+* Total Cost
+* Configuration Steps
+* Exit Steps
+* Pawn Position
+* Board Configuration
+* Final Escape Path
+
+Example:
+
+```text
+SOLUTION FOUND!
+
+Step 1:
+Action: Slide 'C' from cell 7 to cell 6
+
+Step 2:
+Action: Walk from cell 5 to 2
+
+...
+
+GOAL REACHED!
+Pawn has successfully escaped the temple!
+```
+
+---
+
+## 🛠️ Technologies Used
+
+* **Python**
+* **A* Search**
+* **Breadth First Search (BFS)**
+* **Heap Queue (Priority Queue)**
+* **Object-Oriented Programming**
+
+---
+
+## 📖 Concepts Used
+
+This project demonstrates concepts of:
+
+* Artificial Intelligence
+* State Space Search
+* Heuristic Search
+* Graph Traversal
+* Pathfinding
+* BFS
+* A* Search
+* Object-Oriented Design
+
+---
+
+## 🎓 Academic Context
+
+This project was developed as part of an **AI/Search Problem formulation assignment**, where the Temple Trap puzzle was modeled as a formal search problem and solved using optimal search techniques.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+If you'd like to improve:
+
+* Heuristics
+* Performance
+* Additional puzzle levels
+* UI visualization
+
+Feel free to fork the repository and create a pull request.
+
+
+---
+
+## 👨‍💻 Author
+
+**Perneedi Bala Siva Satyanarayana**
+
+GitHub:
+https://github.com/balasiva2006
