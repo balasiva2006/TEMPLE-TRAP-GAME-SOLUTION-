@@ -1,4 +1,4 @@
-```latex
+
 \documentclass[a4paper,11pt]{article}
 
 \usepackage[a4paper,margin=1in]{geometry}
@@ -208,4 +208,4 @@ This project demonstrates concepts in:
 \end{itemize}
 
 \end{document}
-```
+
